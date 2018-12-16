@@ -2,14 +2,18 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"encoding/xml"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 )
 
-type feature struct {
+// encoding/xml で読み込む際のポリゴンの形式
+type xmlFeature struct {
 	Keycode string `xml:"KEY_CODE"`
 	// 都道府県
 	Prefecture string `xml:"PREF_NAME"`
@@ -17,7 +21,7 @@ type feature struct {
 	City string `xml:"CITY_NAME"`
 	// 町字コード+丁目、字などの番号
 	S_area string `xml:"S_AREA"`
-	// 町丁・字等名称
+	// 町丁・字等名称. ないデータもある
 	S_name string `xml:"S_NAME"`
 	// 特殊記号E(町丁・字等重複フラグ). "En" (n >= 1) で面積の多い順
 	E string `xml:"KIGO_E"`
@@ -29,6 +33,13 @@ type feature struct {
 	Poslist string `xml:"surfaceProperty>Surface>patches>PolygonPatch>exterior>LinearRing>posList"`
 }
 
+// encoding/json で書き出す際のポリゴンの形式
+type jsonFeature struct {
+	Prefecture string `json:"prefecture"`
+	City string `json:"city"`
+	Name string `json:"name"`
+	Sphere []float64 `json:"sphere"`
+}
 
 func main() {
 	flag.Parse()
@@ -49,11 +60,28 @@ func main() {
 
 	var document struct {
 		XMLName xml.Name `xml:"FeatureCollection"`
-		Features []feature `xml:"featureMember>h27ka13"`
+		Features []xmlFeature `xml:"featureMember>h27ka13"`
 	}
 
 	if err := xml.Unmarshal(data, &document); err != nil {
 		panic(err)
 	}
-	fmt.Printf("%#v\n", document.Features)
+	jsonFeatures := make([]jsonFeature, len(document.Features))
+	for i, v := range document.Features {
+		points := make([]float64, 0)
+		for _, s := range strings.Split(v.Poslist, " ") {
+			p, err := strconv.ParseFloat(s, 64)
+			if err != nil {
+				panic(err)
+			}
+			points = append(points, p)
+		}
+		jsonFeatures[i] = jsonFeature{Prefecture: v.Prefecture, City: v.City, Name: v.S_name, Sphere: points}
+	}
+	bytes, err := json.Marshal(jsonFeatures)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(bytes))
+	//fmt.Printf("%#v\n", document.Features)
 }
