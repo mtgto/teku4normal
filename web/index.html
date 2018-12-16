@@ -1,7 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta name="viewport" content="width=640,initial-scale=1" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <style>
+            body {
+                margin: 0px;
+            }
+            button {
+                position: absolute;
+                left: 20px;
+                font-size: 1.5rem;
+                font-weight: bold;
+                width: 40px;
+                height: 40px;
+            }
+            button#zoom-in {
+                top: 20px;
+            }
+            button#zoom-out {
+                top: 80px;
+            }
+        </style>
     </head>
     <body style="-webkit-text-size-adjust: 100%">
         <canvas id="canvas" width="640" height="480"></canvas>

@@ -1,17 +1,24 @@
 import tokyo = require("./13.json");
 
+const colors: string[] = ["#1E2B27", "#688A49", "#9FB75F", "#BAD587", "#EEEFC9"];
+for (const oaza of tokyo) {
+    oaza.color = colors[Math.floor(Math.random() * colors.length)];
+}
+
 // 丸の内一丁目
 let originLatitude: number = 35.68151;
 let originLongitude: number = 139.76699;
 
 const canvas: HTMLCanvasElement = document.getElementById("canvas") as HTMLCanvasElement;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 (document.getElementById("zoom-in") as HTMLButtonElement).onmouseup = () => {
-    zoom *= 3;
+    zoom *= 2;
     draw(0);
 }
 (document.getElementById("zoom-out") as HTMLButtonElement).onmouseup = () => {
-    zoom /= 3;
+    zoom /= 2;
     draw(0);
 }
 
@@ -75,8 +82,11 @@ canvas.ontouchend = () => {
 const draw = (time: number) => {
     if (canvas.getContext) {
         const context: CanvasRenderingContext2D = canvas.getContext("2d") as CanvasRenderingContext2D;
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "#AADAFF";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        //context.clearRect(0, 0, canvas.width, canvas.height);
         for (const oaza of tokyo) {
+            context.fillStyle = oaza.color;
             context.beginPath();
             for (let i = 0; i + 1 < oaza.sphere.length; i += 2) {
                 const y = - (oaza.sphere[i] - originLatitude) * zoom + 300;
@@ -88,11 +98,8 @@ const draw = (time: number) => {
                 }
             }
             context.closePath();
-            context.stroke();
+            context.fill();
         }
-        //console.log(originLongitude);
-        //context.fillStyle = "rgba(0, 0, 200, 0.5)";
-        //context.fillRect((139.76699 - originLongitude) * 1000, (originLatitude - 35.68151) * 1000, 100, 100);
     }
 };
 
