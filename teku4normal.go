@@ -41,14 +41,8 @@ type jsonFeature struct {
 	Sphere []float64 `json:"sphere"`
 }
 
-func main() {
-	flag.Parse()
-	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <gml>", os.Args[0])
-		os.Exit(1)
-	}
-
-	file, err := os.Open(flag.Arg(0))
+func loadXml(in string) []xmlFeature {
+	file, err := os.Open(in)
 	if err != nil {
 		panic(err)
 	}
@@ -60,14 +54,35 @@ func main() {
 
 	var document struct {
 		XMLName xml.Name `xml:"FeatureCollection"`
-		Features []xmlFeature `xml:"featureMember>h27ka13"`
+		Features [] struct {
+			Feature xmlFeature `xml:",any"`
+		} `xml:"featureMember"`
 	}
 
 	if err := xml.Unmarshal(data, &document); err != nil {
 		panic(err)
 	}
-	jsonFeatures := make([]jsonFeature, len(document.Features))
-	for i, v := range document.Features {
+	features := make([]xmlFeature, 0)
+	for _, v := range document.Features {
+		features = append(features, v.Feature)
+	}
+	return features
+}
+
+func main() {
+	flag.Parse()
+	if flag.NArg() < 1 {
+		fmt.Fprintf(os.Stderr, "Usage: %s <gml>", os.Args[0])
+		os.Exit(1)
+	}
+
+	features := make([]xmlFeature, 0)
+	for _, in := range flag.Args() {
+		features = append(features, loadXml(in)...)
+	}
+
+	jsonFeatures := make([]jsonFeature, len(features))
+	for i, v := range features {
 		points := make([]float64, 0)
 		for _, s := range strings.Split(v.Poslist, " ") {
 			p, err := strconv.ParseFloat(s, 64)
