@@ -6,9 +6,19 @@ let originLongitude: number = 139.76699;
 
 const canvas: HTMLCanvasElement = document.getElementById("canvas") as HTMLCanvasElement;
 
+(document.getElementById("zoom-in") as HTMLButtonElement).onmouseup = () => {
+    zoom *= 3;
+    draw(0);
+}
+(document.getElementById("zoom-out") as HTMLButtonElement).onmouseup = () => {
+    zoom /= 3;
+    draw(0);
+}
+
 let isDragging: boolean = false;
 let lastX: number = 0;
 let lastY: number = 0;
+let zoom: number = 600;
 
 const startDragging = (clientX: number, clientY: number) => {
     isDragging = true;
@@ -34,8 +44,8 @@ canvas.ontouchstart = (e: TouchEvent) => {
 const updateDrag = (clientX: number, clientY: number) => {
     const offsetX = canvas.getBoundingClientRect().left;
     const offsetY = canvas.getBoundingClientRect().top;
-    originLongitude += (lastX - (clientX - offsetX)) * 0.001;
-    originLatitude += (clientY - offsetY - lastY) * 0.001;
+    originLongitude += (lastX - (clientX - offsetX)) / zoom;
+    originLatitude += (clientY - offsetY - lastY) / zoom;
     lastX = clientX - offsetX;
     lastY = clientY - offsetY;
     draw(0);
@@ -69,8 +79,8 @@ const draw = (time: number) => {
         for (const oaza of tokyo) {
             context.beginPath();
             for (let i = 0; i + 1 < oaza.sphere.length; i += 2) {
-                const y = - (oaza.sphere[i] - originLatitude) * 600 + 300;
-                const x = (oaza.sphere[i+1] - originLongitude) * 600 + 500;
+                const y = - (oaza.sphere[i] - originLatitude) * zoom + 300;
+                const x = (oaza.sphere[i+1] - originLongitude) * zoom + 500;
                 if (i === 0) {
                     context.moveTo(x, y);
                 } else {
