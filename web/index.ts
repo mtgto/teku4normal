@@ -10,28 +10,55 @@ let isDragging: boolean = false;
 let lastX: number = 0;
 let lastY: number = 0;
 
-canvas.onmousedown = (e) => {
+const startDragging = (clientX: number, clientY: number) => {
     isDragging = true;
     const offsetX = canvas.getBoundingClientRect().left;
     const offsetY = canvas.getBoundingClientRect().top;
 
-    lastX = e.clientX - offsetX;
-    lastY = e.clientY - offsetY;
+    lastX = clientX - offsetX;
+    lastY = clientY - offsetY;
+};
+
+canvas.onmousedown = (e: MouseEvent) => startDragging(e.clientX, e.clientY);
+
+canvas.ontouchstart = (e: TouchEvent) => {
+    if (e.targetTouches.length === 1) {
+        // Dragging
+        startDragging(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+    } else {
+        // Swipe
+        e.preventDefault();
+    }
+}
+
+const updateDrag = (clientX: number, clientY: number) => {
+    const offsetX = canvas.getBoundingClientRect().left;
+    const offsetY = canvas.getBoundingClientRect().top;
+    originLongitude += (lastX - (clientX - offsetX)) * 0.001;
+    originLatitude += (clientY - offsetY - lastY) * 0.001;
+    lastX = clientX - offsetX;
+    lastY = clientY - offsetY;
+    draw(0);
 }
 
 canvas.onmousemove = (e) => {
-    if (isDragging){
-        const offsetX = canvas.getBoundingClientRect().left;
-        const offsetY = canvas.getBoundingClientRect().top;
-        originLongitude += (lastX - (e.clientX - offsetX)) * 0.001;
-        originLatitude += (e.clientY - offsetY - lastY) * 0.001;
-        lastX = e.clientX - offsetX;
-        lastY = e.clientY - offsetY;
-        draw(0);
+    if (isDragging) {
+        updateDrag(e.clientX, e.clientY);
+    }
+}
+
+canvas.ontouchmove = (e: TouchEvent) => {
+    if (isDragging) {
+        updateDrag(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault();
     }
 }
 
 canvas.onmouseup = () => {
+    isDragging = false;
+}
+
+canvas.ontouchend = () => {
     isDragging = false;
 }
 
@@ -53,8 +80,9 @@ const draw = (time: number) => {
             context.closePath();
             context.stroke();
         }
+        //console.log(originLongitude);
         //context.fillStyle = "rgba(0, 0, 200, 0.5)";
-        //context.fillRect(10, 10, 10, 10);
+        //context.fillRect((139.76699 - originLongitude) * 1000, (originLatitude - 35.68151) * 1000, 100, 100);
     }
 };
 
